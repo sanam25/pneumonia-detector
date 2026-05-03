@@ -1,0 +1,191 @@
+#Kaggle download -> preprocessing -> multi-model training -> evaluation -> selection -> second opinion -> Grad-CAM -> save outputs
+
+!pip install tensorflow
+
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.applications import ResNet50
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.models import Model
+
+from google.colab import drive
+drive.mount('/content/drive')
+
+!cp /content/drive/MyDrive/archive.zip /content/
+!unzip archive.zip
+
+import os
+
+os.listdir('/content')
+s.listdir('/content/chest_xray')
+
+train_dir = "/content/chest_xray/train"
+val_dir   = "/content/chest_xray/val"
+test_dir  = "/content/chest_xray/test"
+
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+img_size = (224, 224)
+batch_size = 32
+
+train_gen = ImageDataGenerator(rescale=1./255)
+
+train_data = train_gen.flow_from_directory(
+    train_dir,
+    target_size=img_size,
+    batch_size=batch_size,
+    class_mode='binary'
+)
+
+val_data = train_gen.flow_from_directory(
+    val_dir,
+    target_size=img_size,
+    batch_size=batch_size,
+    class_mode='binary'
+)
+
+from tensorflow.keras.applications import ResNet50
+
+base_model = ResNet50(
+    weights='imagenet',
+    include_top=False,
+    input_shape=(224,224,3)
+)
+
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.models import Model
+
+for layer in base_model.layers:
+    layer.trainable = False
+
+x = base_model.output
+x = GlobalAveragePooling2D()(x)
+x = Dense(128, activation='relu')(x)
+output = Dense(1, activation='sigmoid')(x)
+
+model = Model(inputs=base_model.input, outputs=output)
+
+model.compile(
+    optimizer='adam',
+    loss='binary_crossentropy',
+    metrics=['accuracy']
+)
+
+model.fit(
+    train_data,
+    validation_data=val_data,
+    epochs=5
+)
+
+import os
+
+sample_path = "/content/chest_xray/test/PNEUMONIA"
+files = os.listdir(sample_path)
+
+img_path = os.path.join(sample_path, files[0])
+print(img_path)
+
+# 1. Imports
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
+import matplotlib.pyplot as plt
+
+# 2. Load trained model
+model = load_model("pneumonia_model.h5")
+
+# 3. Load and preprocess image
+img_path = "/content/chest_xray/test/PNEUMONIA/person50_virus_102.jpeg"  # change this
+
+img = image.load_img(img_path, target_size=(224, 224))
+img_array = image.img_to_array(img)
+img_array = img_array / 255.0   # normalize
+img_array = np.expand_dims(img_array, axis=0)  # shape (1,224,224,3)
+
+# 4. Predict
+prediction = model.predict(img_array)
+
+# 5. Interpret result
+if prediction[0][0] > 0.5:
+    result = "PNEUMONIA"
+else:
+    result = "NORMAL"
+
+# 6. Show output
+print("Prediction:", result)
+print("Confidence:", float(prediction[0][0]))
+
+# 7. Display image
+plt.imshow(img)
+plt.title(result)
+plt.axis("off")
+plt.show()
+
+# Save in HDF5 format
+model.save("pneumonia_model.h5")
+
+# Save in Keras (new format)
+model.save("pneumonia_model.keras")
+
+from google.colab import files
+
+files.download("pneumonia_model.h5")
+files.download("pneumonia_model.keras")
+
+model = tf.keras.models.load_model(
+    "/content/drive/MyDrive/pneumonia_model.h5",
+    compile=False
+)
+
+from tensorflow.keras.applications import ResNet50
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.models import Model
+
+base_model = ResNet50(weights=None, include_top=False, input_shape=(224,224,3))
+
+x = base_model.output
+x = GlobalAveragePooling2D()(x)
+x = Dense(1, activation='sigmoid')(x)
+
+new_model = Model(inputs=base_model.input, outputs=x)
+
+model.summary()
+
+from tensorflow.keras.applications import ResNet50
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.models import Model
+
+base_model = ResNet50(weights=None, include_top=False, input_shape=(224,224,3))
+
+x = base_model.output
+x = GlobalAveragePooling2D()(x)
+x = Dense(128, activation='relu')(x)   # ✅ IMPORTANT
+x = Dense(1, activation='sigmoid')(x)  # ✅ IMPORTANT
+
+new_model = Model(inputs=base_model.input, outputs=x)
+
+new_model.load_weights("model.weights.h5")
+
+new_model.save("final_clean_model.h5")
+
+from google.colab import files
+files.download("final_clean_model.h5")
+
+from tensorflow.keras.applications import ResNet50
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
+from tensorflow.keras.models import Model
+
+base_model = ResNet50(weights=None, include_top=False, input_shape=(224,224,3))
+
+x = base_model.output
+x = GlobalAveragePooling2D()(x)
+x = Dense(128, activation='relu')(x)
+x = Dense(1, activation='sigmoid')(x)
+
+model = Model(inputs=base_model.input, outputs=x)
+
+model.load_weights("model.weights.h5")
+
+from google.colab import files
+files.download("model.weights.h5")
