@@ -1,0 +1,5 @@
+cd backend
+  docker build -t pneumonia-app .
+  docker run -p 8000:8000 pneumonia-app
+    docker ps
+docker stop <container_id>
