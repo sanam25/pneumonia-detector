@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>MedVision AI</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: linear-gradient(to right, #e3f2fd, #ffffff);
+    text-align: center;
+}
+
+header {
+    background-color: #0d47a1;
+    color: white;
+    padding: 15px;
+    font-size: 24px;
+}
+
+.card {
+    background: white;
+    padding: 25px;
+    margin: 40px auto;
+    width: 400px;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+button {
+    background-color: #1565c0;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0d47a1;
+}
+
+img {
+    width: 200px;
+    margin-top: 10px;
+}
+
+#result {
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<header>🩺 MedVision AI - Pneumonia Detection</header>
+
+<div class="card">
+
+<input type="file" id="fileInput" onchange="previewImage()"><br><br>
+
+<img id="preview" />
+
+<br><br>
+
+<button onclick="predict()">Analyze</button>
+
+<p id="result"></p>
+
+</div>
+
+<script>
+function previewImage() {
+    let file = document.getElementById("fileInput").files[0];
+    let reader = new FileReader();
+
+    reader.onload = function(e) {
+        document.getElementById("preview").src = e.target.result;
+    }
+
+    reader.readAsDataURL(file);
+}
+
+async function predict() {
+    let file = document.getElementById("fileInput").files[0];
+
+    if (!file) {
+        alert("Upload an image first");
+        return;
+    }
+
+    let formData = new FormData();
+    formData.append("file", file);
+
+    let res = await fetch("http://127.0.0.1:8000/predict", {
+        method: "POST",
+        body: formData
+    });
+
+    let data = await res.json();
+
+    document.getElementById("result").innerHTML =
+        `🩺 Result: ${data.prediction} <br>
+         📊 Confidence: ${data.confidence}% <br>
+         ⚠️ Severity: ${data.severity} <br>
+         💡 Advice: ${data.advice}`;
+}
+</script>
+
+</body>
+</html>

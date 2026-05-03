@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pneumonia Detection System</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #e3f2fd, #ffffff);
+            text-align: center;
+            margin: 0;
+        }
+
+        header {
+            background-color: #0d47a1;
+            color: white;
+            padding: 15px;
+            font-size: 24px;
+        }
+
+        .container {
+            margin-top: 40px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            margin: auto;
+            width: 400px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        input[type="file"] {
+            margin: 15px 0;
+        }
+
+        button {
+            background-color: #1565c0;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0d47a1;
+        }
+
+        img {
+            margin-top: 15px;
+            max-width: 100%;
+            border-radius: 10px;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .loading {
+            color: orange;
+        }
+
+        .normal {
+            color: green;
+        }
+
+        .pneumonia {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>🩺 Pneumonia Detection System</header>
+
+<div class="container">
+    <div class="card">
+
+        <h3>Upload Chest X-ray</h3>
+
+        <input type="file" id="fileInput" onchange="previewImage(event)">
+        <br>
+
+        <img id="preview" />
+
+        <br><br>
+
+        <button onclick="predict()">Analyze</button>
+
+        <div id="result"></div>
+
+    </div>
+</div>
+
+<script>
+function previewImage(event) {
+    let reader = new FileReader();
+    reader.onload = function() {
+        let img = document.getElementById("preview");
+        img.src = reader.result;
+    }
+    reader.readAsDataURL(event.target.files[0]);
+}
+
+async function predict() {
+    let file = document.getElementById("fileInput").files[0];
+
+    if (!file) {
+        alert("Please upload an image first");
+        return;
+    }
+
+    let resultDiv = document.getElementById("result");
+    resultDiv.innerHTML = "<span class='loading'>Analyzing...</span>";
+
+    let formData = new FormData();
+    formData.append("file", file);
+
+    let response = await fetch("http://127.0.0.1:8000/predict", {
+        method: "POST",
+        body: formData
+    });
+
+    let data = await response.json();
+
+    if (data.prediction === "PNEUMONIA") {
+        resultDiv.innerHTML = 
+            "<span class='pneumonia'>⚠️ Pneumonia Detected</span><br>Confidence: " + data.confidence;
+    } else {
+        resultDiv.innerHTML = 
+            "<span class='normal'>✅ Normal</span><br>Confidence: " + data.confidence;
+    }
+}
+</script>
+
+</body>
+</html>
