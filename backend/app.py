@@ -42,6 +42,9 @@ def preprocess(img_bytes):
 
 # Prediction API
 @app.post("/predict")
+@app.get("/")
+def home():
+    return {"message": "MedVision AI is running 🚀"}
 async def predict(file: UploadFile = File(...)):
     contents = await file.read()
     img = preprocess(contents)
